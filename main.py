@@ -15,20 +15,25 @@ st.markdown("""
 أدخل فكرة المنتج، ثم **زود الفريق بمعلومات عن العميل والأسلوب المطلوب**، وسيقوم بإنشاء تقرير تسويقي متكامل ومخصص.
 """)
 
-# --- إعداد البيئة والمفاتيح ---
+# --- إعداد البيئة والمفاتيح (تم التعديل ليتوافق مع Streamlit Cloud) ---
 @st.cache_resource
 def setup_environment_and_models():
     try:
-        # استبدل هذا بقراءة المفاتيح من Replit Secrets
-        os.environ["GROQ_API_KEY"] = os.environ.get('GROQ_API_KEY')
-        os.environ["TAVILY_API_KEY"] = os.environ.get('TAVILY_API_KEY')
+        # **التعديل الحاسم**: نقرأ المفاتيح مباشرة من st.secrets الخاص بـ Streamlit
+        groq_api_key = st.secrets["GROQ_API_KEY"]
+        tavily_api_key = st.secrets["TAVILY_API_KEY"]
+
+        # نقوم بتعيين المفاتيح كمتغيرات بيئة لتتوافق مع مكتبة Tavily
+        os.environ["TAVILY_API_KEY"] = tavily_api_key
 
         search_tool = TavilySearchResults(max_results=5)
-        llm = ChatGroq(model="llama3-8b-8192", temperature=0.4) # زدنا الإبداع قليلاً
+        # نمرر مفتاح Groq مباشرة عند إنشاء النموذج
+        llm = ChatGroq(api_key=groq_api_key, model="llama3-8b-8192", temperature=0.4)
 
         return search_tool, llm
     except Exception as e:
-        st.error(f"🛑 خطأ في إعداد البيئة: {e}")
+        # رسالة خطأ أوضح إذا لم يتم العثور على المفاتيح
+        st.error(f"🛑 خطأ في إعداد البيئة: {e}. هل قمت بإضافة GROQ_API_KEY و TAVILY_API_KEY في إعدادات التطبيق على Streamlit Cloud؟")
         return None, None
 
 search_tool, llm = setup_environment_and_models()
@@ -133,5 +138,3 @@ if st.sidebar.button("🚀 أطلق فريق التسويق المخصص!"):
 
     else:
         st.sidebar.warning("يرجى ملء جميع الخانات الثلاث لبدء العمل.")
-
-
